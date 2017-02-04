@@ -10,6 +10,9 @@ import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+*import edu.wpi.first.wpilibj.Servo;
+*import edu.wpi.first.wpilibj.command.Subsystem;
+
 //
 // IF YOU WANT TO DEPLOY CODE TO ROBORIO, GO TO RUN AT THE TOP AND PRESS RUN AS WPILIB JAVA
 //
@@ -144,11 +147,18 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	}
 	
 	private void highGoalSucks(){ 	// method for dumping balls
-		
+	
+		Servo ballCollector= new Servo(1);
+	
+		private ServoBallCollector() {
+			if (xboxController.getRawButton(1)) {
+			ballCollector.setAngle(75);
+		}		
 	}
 	
 	private void iceClimbers(){
-		
+		Servo climbingPick= new Servo(2);
+			if (xboxController.getRawAxis(2)>0.3)
 	}
 
 }
