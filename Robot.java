@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -14,23 +15,29 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // IF YOU WANT TO DEPLOY CODE TO ROBORIO, GO TO RUN AT THE TOP AND PRESS RUN AS WPILIB JAVA
 //
 
+
 public class Robot extends IterativeRobot implements PIDOutput{
 	final String defaultAuto = "Default";
 	final String customAuto = "My Auto";
 	final String backUpPlan = "Base Line Auto";
 	final String rightStart = "Right Start";
 	final String leftStart = "Left Start";
+	final String midStart = "Mid Start";
 	String autoSelected;
-	SendableChooser<String> chooser = new SendableChooser<>();
+	SendableChooser <String> chooser = new SendableChooser<>();
 	
 	RobotDrive erroll;
 	
-	//speed controllers, find the ports on the roboRIO
+	//spm  eed controllers, find the ports on the roboRIO
 	Victor rightFront;
 	Victor rightBack;
 	Victor leftFront;
 	Victor leftBack;
-	Victor gearMotor;
+	
+	Talon gearMotor;
+	
+	boolean reverseDrive;
+	boolean forwardDrive;
 	
 	Joystick xboxController;
 	
@@ -42,21 +49,28 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	static final double kF = 0.00; 
 	static final double kToleranceDegrees = 2.0f;
  
+	
 	@Override
 	public void robotInit() {
 		chooser.addDefault("Default Auto", defaultAuto);
-		chooser.addObject("My Auto", customAuto);
+		//chooser.addObject("My Auto", customAuto);
 		chooser.addObject("BaseLineAuto", backUpPlan);
 		chooser.addObject("Right Start" , rightStart);
 		chooser.addObject("Left Start", leftStart);
+		chooser.addObject("Mid Start", midStart);
 		SmartDashboard.putData("Auto modes", chooser);
 		
 		xboxController = new Joystick(0);
+		
+		reverseDrive=false;
+		forwardDrive=true;
 		
 		rightFront = new Victor (1); //port 1
 		rightBack = new Victor (2); //port 2
 		leftFront = new Victor (3); //port 3
 		leftBack = new Victor (4); //port 4
+		
+		gearMotor = new Talon (0);  
 		
 		erroll = new RobotDrive(rightFront, rightBack, leftFront, leftBack); 
 		
@@ -76,11 +90,11 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	@Override
 	public void autonomousInit() {
 		//autoSelected = chooser.getSelected();
-		autoSelected = SmartDashboard.getString("Auto Selector",
-		defaultAuto);
+		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
 		chooser.addObject("BaseLineAuto", backUpPlan);
 		chooser.addObject("Right Start" , rightStart);
 		chooser.addObject("Left Start", leftStart);
+		chooser.addObject("Mid Start", midStart);
 		System.out.println("Auto selected: " + autoSelected);
 
 	}
@@ -88,24 +102,34 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	@Override
 	public void autonomousPeriodic() {
 		switch (autoSelected) {
-		case customAuto:
-			// Put custom auto code here
+		case midStart:
+			// Put Mid Start code here
+			erroll.drive(1.0,0.0);;
 			break;
-		case defaultAuto:
+		case leftStart:
+			//Put Left Start Code here
+			
+			break;
+		case rightStart:
+			//Put Right Start Code here
+			
+			break;
 		default:
 			// Put default auto code here
-			erroll.drive(-0.5,0.0);
-			Timer.delay(3);
-			erroll.drive(0.0, 0.0);
-			gearIntake();
+			
+			erroll.drive(-0.6,0.0);
+			Timer.delay(7.0);
+			
 			break;
+			
 		}
 	}
 
 	@Override
 	public void teleopPeriodic() {
+		smartBoardData();
+		switchDrive();
 		xboxDrive();
-		gearIntake();
 		highGoalSucks();
 		iceClimbers();
 	}
@@ -120,34 +144,59 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	
 	public void pidWrite(double output){
 		
-	}
+	}	
 	
 	
 	private void xboxDrive(){    		//system for determining which speed desired. Joystick.getRawAxis(Axis Number)*Speed[Range:0-1.0]
-		if ((xboxController.getRawAxis(2)>0.3) && (xboxController.getRawAxis(3)<0.3)) {
-			erroll.tankDrive(xboxController.getRawAxis(5) * 0.5, xboxController.getRawAxis(1) * 0.5, true);
+		if (forwardDrive){
+			if ((xboxController.getRawButton(5)) ) { 
+				erroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
+			}
+			else if (xboxController.getRawButton(6)){		//HIT THE NOS
+				erroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
+			}
+			else {
+				erroll.tankDrive(xboxController.getRawAxis(5) * 0.7, xboxController.getRawAxis(1) * 0.7, true);
+			}
 		}
-		else if ((xboxController.getRawAxis(3)>0.3) && (xboxController.getRawAxis(2)<0.3)){		//HIT THE NOS
-			erroll.tankDrive(xboxController.getRawAxis(5) * 0.9, xboxController.getRawAxis(1) * 0.9, true);
-		}
-		else {
-			erroll.tankDrive(-xboxController.getRawAxis(5) * 0.7, -xboxController.getRawAxis(1) * 0.7, true);
-		}
+		else{
+			if ((xboxController.getRawButton(5)) ) { 
+				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.5, -xboxController.getRawAxis(5) * 0.5, true);
+				}
+			else if (xboxController.getRawButton(6)){		//HIT THE NOS
+				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.85, -xboxController.getRawAxis(5) * 0.85, true);
+				}
+			else {
+				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.7, -xboxController.getRawAxis(5) * 0.7, true);
+				}
+			}
 	}
 	
-	private void gearIntake(){		// method for putting gear on peg
+	private void switchDrive(){
 		if (xboxController.getRawButton(4)){
-			gearMotor.set(-0.3);
-			gearMotor.set(0.3);
+			if (!reverseDrive){
+			forwardDrive=!forwardDrive;
+			reverseDrive=true;
+			}
 		}
-
+			else{
+				reverseDrive=false;
+			}
 	}
+	
+
+	
 	
 	private void highGoalSucks(){ 	// method for dumping balls
 		
 	}
 	
-	private void iceClimbers(){
+	private void smartBoardData(){
+		SmartDashboard.putBoolean("Forward Mode", forwardDrive);
+		
+	}
+	
+	private void iceClimbers(){ //method for climbing onto the ship
 		
 	}
 
