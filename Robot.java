@@ -89,8 +89,8 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	 */
 	@Override
 	public void autonomousInit() {
-		//autoSelected = chooser.getSelected();
-		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
+		autoSelected = chooser.getSelected();
+		//autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
 		chooser.addObject("BaseLineAuto", backUpPlan);
 		chooser.addObject("Right Start" , rightStart);
 		chooser.addObject("Left Start", leftStart);
