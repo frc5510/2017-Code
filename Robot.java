@@ -1,3 +1,4 @@
+
 package org.usfirst.frc.team5510.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -5,8 +6,10 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
+//import edu.wpi.first.wpilibj.Timer.StaticInterface;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -26,15 +29,17 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	String autoSelected;
 	SendableChooser <String> chooser = new SendableChooser<>();
 	
-	RobotDrive erroll;
-	
+	RobotDrive eggroll;
+	RobotDrive tomato;
 	//spm  eed controllers, find the ports on the roboRIO
 	Victor rightFront;
 	Victor rightBack;
 	Victor leftFront;
 	Victor leftBack;
+	Victor tomatoClimb;
 	
 	Talon gearMotor;
+	Spark iceClimb;
 	
 	boolean reverseDrive;
 	boolean forwardDrive;
@@ -48,11 +53,15 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	static double kD = 0.00; //increase until quick enough
 	static final double kF = 0.00; 
 	static final double kToleranceDegrees = 2.0f;
- 
+	Timer autoTimerTing;
+	//private boolean haha;
+	
+	double autoTimerStart;
+
 	
 	@Override
 	public void robotInit() {
-		chooser.addDefault("Default Auto", defaultAuto);
+		//chooser.addDefault("Default Auto", defaultAuto);
 		//chooser.addObject("My Auto", customAuto);
 		chooser.addObject("BaseLineAuto", backUpPlan);
 		chooser.addObject("Right Start" , rightStart);
@@ -69,11 +78,12 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		rightBack = new Victor (2); //port 2
 		leftFront = new Victor (3); //port 3
 		leftBack = new Victor (4); //port 4
-		
+		//tomatoClimb = new Victor (5); //port 5
 		gearMotor = new Talon (0);  
 		
-		erroll = new RobotDrive(rightFront, rightBack, leftFront, leftBack); 
-		
+		iceClimb = new Spark (5);
+		eggroll = new RobotDrive(rightFront, rightBack, leftFront, leftBack); 
+		//tomato = new RobotDrive(tomatoClimb);
 	}
 
 	/**
@@ -86,9 +96,12 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	 * You can add additional auto modes by adding additional comparisons to the
 	 * switch structure below with additional strings. If using the
 	 * SendableChooser make sure to add them to the chooser code above as well.
+	
 	 */
+
 	@Override
 	public void autonomousInit() {
+		eggroll.setSafetyEnabled(false);
 		autoSelected = chooser.getSelected();
 		//autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
 		chooser.addObject("BaseLineAuto", backUpPlan);
@@ -96,37 +109,131 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		chooser.addObject("Left Start", leftStart);
 		chooser.addObject("Mid Start", midStart);
 		System.out.println("Auto selected: " + autoSelected);
-
+		//System.out.println("Auto Timer: " + autoTimer.get());
+		autoTimerStart = Timer.getFPGATimestamp();
+		
+		//
 	}
-
+	
+	/*public class DriveStraightForXAtY extends Command {
+		protected double power; 
+		protected double time;
+		protected long endTime;
+	}
+	
+	public DriveStraightForDistance(double (1.0, 0.0), double 15){
+		this.power = 1;
+		this.time = 1;
+		requires();
+	}
+	*/
+	
 	@Override
 	public void autonomousPeriodic() {
-		switch (autoSelected) {
+		double currTimer = Timer.getFPGATimestamp();
+		double timeElapsed = currTimer-autoTimerStart;
+		/*Timer.getMatchTime();
+			StaticInterface ti;
+			while(true){
+		Timer.getFPGATimeStamp(15);
+				Timer.SetImplementation(ti);	
+			*/
+	
+		switch (autoSelected) {		
 		case midStart:
 			// Put Mid Start code here
-			erroll.drive(1.0,0.0);;
+			if (timeElapsed <2){
+				eggroll.drive(-0.6, 0.0);
+			}
+			
+			else if (timeElapsed <5){
+				eggroll.drive(0.6, 0.0);
+			}
+			
+			else if (timeElapsed < 6) {
+				eggroll.drive(0.2, 0.0);
+			}
+			else if (timeElapsed==15){
+				eggroll.drive(0.0, 0.0);          
+				eggroll.setSafetyEnabled(true);
+			}
 			break;
+			
 		case leftStart:
 			//Put Left Start Code here
 			
+			if (timeElapsed <2) {
+				eggroll.drive(-0.6, 0.5);
+			}
+			
+			else if (timeElapsed <5){
+				eggroll.drive(0.0, 0.0);
+				eggroll.setSafetyEnabled(true);
+			}
 			break;
 		case rightStart:
 			//Put Right Start Code here
-			
+			if (timeElapsed<2){
+				eggroll.drive(-0.5, 0.5);
+			}
+			else if (timeElapsed<5){
+				eggroll.drive(0.5, 0.5);
+			}
+			else if (timeElapsed<6){
+				eggroll.drive(0.0, 0.0);
+				eggroll.setSafetyEnabled(true);
+			}
 			break;
 		default:
-			// Put default auto code here
 			
-			erroll.drive(-0.6,0.0);
-			Timer.delay(7.0);
+			
+			
+			
+			
+			
+			
+			
+			/*int a = 0;
+			for(a = 0; a < 2; a++){
+				eggroll.drive(-0.2, 0.0);
+			}
+			eggroll.drive(-0.1, 0.2);
+			int b = 0;
+			for(b = 0; b < 2; b++){
+				eggroll.drive(0.5,  0.0);
+			}
+			// Put default auto code here
+			*/
+		
+		
+		
+			/*while(!haha)
+				
+				
+			for (int x = 1; x < 3; x= x +1){
+					eggroll.drive(-0.1, 0.0);	
+				
+			if (x == 3){
+			autoTimer.stop(); 
+			haha = true;
+			eggroll.drive(0.0,0.0);
+			}
+			*/
+					
+				/* autoTimer.stop(); 
+				 erroll.drive(-0.1, 0.6); Turn*/
+
 			
 			break;
-			
+				
+		
 		}
 	}
 
-	@Override
+
+@Override
 	public void teleopPeriodic() {
+		eggroll.setSafetyEnabled(true);
 		smartBoardData();
 		switchDrive();
 		xboxDrive();
@@ -146,28 +253,33 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		
 	}	
 	
+	//double throttle = (-xboxController.getThrottle() + 1.0d) / 2.0d;
+	
 	
 	private void xboxDrive(){    		//system for determining which speed desired. Joystick.getRawAxis(Axis Number)*Speed[Range:0-1.0]
 		if (forwardDrive){
 			if ((xboxController.getRawButton(5)) ) { 
-				erroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
+				eggroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
+				
+				//eggroll.tankDrive(xboxController.getRawAxis(5) * ((-xboxController.getThrottle()+1/2)), xboxController.getRawAxis(1) * ((xboxController.getThrottle()+1/2)), true;
 			}
 			else if (xboxController.getRawButton(6)){		//HIT THE NOS
-				erroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
+				eggroll.tankDrive(-xboxController.getRawAxis(5) * -0.5, -xboxController.getRawAxis(1) * -0.5, true);
 			}
 			else {
-				erroll.tankDrive(xboxController.getRawAxis(5) * 0.7, xboxController.getRawAxis(1) * 0.7, true);
+				eggroll.tankDrive(xboxController.getRawAxis(5) * 0.7, xboxController.getRawAxis(1) * 0.7, true);
+				//eggroll.tankDrive(xboxController.getRawAxis(5) * 0.7, xboxController.getRawAxis(1) * 0.7, true);
 			}
 		}
 		else{
 			if ((xboxController.getRawButton(5)) ) { 
-				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.5, -xboxController.getRawAxis(5) * 0.5, true);
+				eggroll.tankDrive(-xboxController.getRawAxis(1) * 0.5, -xboxController.getRawAxis(5) * 0.5, true);
 				}
 			else if (xboxController.getRawButton(6)){		//HIT THE NOS
-				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.85, -xboxController.getRawAxis(5) * 0.85, true);
+				eggroll.tankDrive(-xboxController.getRawAxis(1) * 0.85, -xboxController.getRawAxis(5) * 0.85, true);
 				}
 			else {
-				erroll.tankDrive(-xboxController.getRawAxis(1) * 0.7, -xboxController.getRawAxis(5) * 0.7, true);
+				eggroll.tankDrive(-xboxController.getRawAxis(1) * 0.7, -xboxController.getRawAxis(5) * 0.7, true);
 				}
 			}
 	}
@@ -197,7 +309,23 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	}
 	
 	private void iceClimbers(){ //method for climbing onto the ship
+		if (xboxController.getRawButton(3)){
+			iceClimb.set(-1);
+			
+		}
 		
+		if (xboxController.getRawButton(1)) {
+			iceClimb.set(0);
+		}
+		
+		if (xboxController.getRawButton(2)) {
+			iceClimb.set(1);
+		}
+		
+		
+		//if ((xboxController.getRawButton(2)) ) { 
+			//eggroll.tankDrive(-xboxController.getRawAxis(1) * 0.5, -xboxController.getRawAxis(5) * 0.5, true);
+			//}
 	}
 
 }
